@@ -1,4 +1,4 @@
-// NetworkTimeSeriesSimulator.cpp : ネットワーク・
+// NetworkTimeSeriesSimulator.cpp : ネットワークを仮定し、情報が伝播する過程をシミュレートする
 //
 
 #include "stdafx.h"
