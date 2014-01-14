@@ -7,14 +7,14 @@
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//user topci
-	map<int, string> userTopicMap = readCsv("B:/workspace-c/data/time-series-network/input/exp11/user-topic.csv");
+	map<int, string> userTopicMap = readCsv("B:/workspace-c/data/time-series-network/input/exp12/user-topic.csv");
 	int userNum = userTopicMap.size();
 
 	// network
-	map<int, string> networkMap = readCsv("B:/workspace-c/data/time-series-network/input/exp11/network.csv");
+	map<int, string> networkMap = readCsv("B:/workspace-c/data/time-series-network/input/exp12/network.csv");
 
 	// influencer
-	string influencer = readText("B:/workspace-c/data/time-series-network/input/exp11/influencer.txt");
+	string influencer = readText("B:/workspace-c/data/time-series-network/input/exp12/influencer.txt");
 	int tlen = influencer.length();
 
 	// result matrix init
@@ -22,7 +22,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	for (int i = 0; i < userNum; i++) {
 		result[i] = new string[tlen];
 	}
-
+	
 	// result <- influencer
 	for (int i = 0; i < tlen; i++){
 		result[0][i] = influencer[i];
@@ -100,13 +100,21 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	// output
+	string outputData("");
 	cout << "output" << endl;
 	for (int i = 0; i < userNum; i++) {
 		for (int j = 0; j < tlen; j++) {
 			cout << result[i][j];
+			outputData.append(result[i][j] + ",");
 		}
 		cout << endl;
+		outputData.append("\n");
 	}
+	// file open
+	ofstream result_file;
+	result_file.open("B:/workspace-c/data/time-series-network/output/exp12/network-time-series.csv", ios::out);
+	result_file << outputData;
+	result_file.close();
 
 
 	// result matrix close
