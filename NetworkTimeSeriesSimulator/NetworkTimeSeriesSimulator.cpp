@@ -1,120 +1,190 @@
-// NetworkTimeSeriesSimulator.cpp : ネットワークを仮定し、情報が伝播する過程をシミュレートするtest
+// TimeSeriesNetworkSimulator.cpp : （リンク・時間）セットで影響を与えるかどうかのノイズをいれる。１０％～９０％
 //
 
 #include "stdafx.h"
+#include <direct.h>
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	string dataDir("B:/workspace-c/data/time-series-network/input/exp15/");
+	string outputDir("B:/transfer-entropy/artificial_experiment/ver1.0/TE_ver1_exp_ver15/");
+
 	//user topci
-	map<int, string> userTopicMap = readCsv("B:/workspace-c/data/time-series-network/input/exp11/user-topic.csv");
+	map<int, string> userTopicMap = readCsv(dataDir + "user-topic.csv");
 	int userNum = userTopicMap.size();
 
 	// network
-	map<int, string> networkMap = readCsv("B:/workspace-c/data/time-series-network/input/exp11/network.csv");
+	map<int, string> networkMap = readCsv(dataDir + "network.csv");
 
 	// influencer
-	string influencer = readText("B:/workspace-c/data/time-series-network/input/exp11/influencer.txt");
+	string influencer = readText(dataDir + "influencer.txt");
 	int tlen = influencer.length();
 
-	// result matrix init
-	string ** result = new string*[userNum];
-	for (int i = 0; i < userNum; i++) {
-		result[i] = new string[tlen];
-	}
+	// noise roop
+	for (int noi = 1; noi <= 9; noi++) {
+		int noiseNum = noi * 10;
+		for (int roopCount = 1; roopCount < 6; roopCount++) {
+			// influence
+			int influence[10][10] = {
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+				{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
 
-	// result <- influencer
-	for (int i = 0; i < tlen; i++){
-		result[0][i] = influencer[i];
-	}
-
-	// result <- 0
-	for (int i = 1; i < userNum; i++) {
-		for (int j = 0; j < tlen; j++) {
-			result[i][j] = "0";
-		}
-	}
-
-	// init
-	for (int i = 0; i < userNum; i++) {
-		for (int j = 0; j < tlen; j++) {
-			cout << result[i][j];
-		}
-		cout << endl;
-	}
-
-
-	// simulate
-	for (int i = 1; i < tlen; i++) {
-		cout << "time: " << i << endl;
-		for (int j = 1; j < userNum; j++) {
-			string link = networkMap[j];
-			string mytopic = userTopicMap[j];
-			int influenceFlag = 0;
-			if (i == 5 && j == 1) {
-				cout << "stop" << endl;
+			// noise
+			for (int i = 0; i < noiseNum; i++) {
+				int randomNum = GetRandom(0, 99);
+				influence[randomNum / 10][randomNum % 10] = 0;
 			}
-			for (int l = 0; l < link.size(); l++) {
-				set<int> influence_topics;
-				// link判定
-				if (link[l] == '1') {
-					// topic判定
-					string partnerTopic = userTopicMap[l];
-					for (int m = 0; m < mytopic.size(); m++) {
-						for (int n = 0; n < partnerTopic.size(); n++) {
-							if (mytopic[m] == partnerTopic[n]) {
-								if (influence_topics.find(chatToInt(mytopic[m])) == influence_topics.end()) {
-									influence_topics.insert(chatToInt(mytopic[m]));
+
+			// result matrix init
+			string ** result = new string*[userNum];
+			for (int i = 0; i < userNum; i++) {
+				result[i] = new string[tlen];
+			}
+
+			// result <- influencer
+			for (int i = 0; i < tlen; i++){
+				result[0][i] = influencer[i];
+			}
+
+			// result <- 0
+			for (int i = 1; i < userNum; i++) {
+				for (int j = 0; j < tlen; j++) {
+					result[i][j] = "0";
+				}
+			}
+
+			// init
+			for (int i = 0; i < userNum; i++) {
+				for (int j = 0; j < tlen; j++) {
+					cout << result[i][j];
+				}
+				cout << endl;
+			}
+
+
+			// simulate
+			for (int i = 1; i < tlen; i++) {
+				cout << "time: " << i << endl;
+				for (int j = 1; j < userNum; j++) {
+					string link = networkMap[j];
+					string mytopic = userTopicMap[j];
+					int influenceFlag = 0;
+					if (i == 5 && j == 1) {
+						cout << "stop" << endl;
+					}
+					for (int l = 0; l < link.size(); l++) {
+						set<int> influence_topics;
+						// link判定
+						if (link[l] == '1' && influence[l][i - 1]) {
+							// topic判定
+							string partnerTopic = userTopicMap[l];
+							for (int m = 0; m < mytopic.size(); m++) {
+								for (int n = 0; n < partnerTopic.size(); n++) {
+									if (mytopic[m] == partnerTopic[n]) {
+										if (influence_topics.find(chatToInt(mytopic[m])) == influence_topics.end()) {
+											influence_topics.insert(chatToInt(mytopic[m]));
+										}
+									}
 								}
+							}
+							// 影響値判定
+							cout << "influence_topics" << endl;
+							std::set< int >::iterator pos = influence_topics.begin();//先頭の要素を取得する
+							while (pos != influence_topics.end()){//最後の要素に達するまでループ
+								printf("%d\n", *pos);//値を表示
+								pos++;//一つ進める
+							}
+							cout << "result[l][i-1]" << stringToInt(result[l][i - 1]) << endl;
+							if (influence_topics.count(stringToInt(result[l][i - 1])) > 0) {
+								result[j][i] = result[l][i - 1];
+								influenceFlag = 1;
+								break;
 							}
 						}
 					}
-					// 影響値判定
-					cout << "influence_topics" << endl;
-					std::set< int >::iterator pos = influence_topics.begin();//先頭の要素を取得する
-					while (pos != influence_topics.end()){//最後の要素に達するまでループ
-						printf("%d\n", *pos);//値を表示
-						pos++;//一つ進める
-					}
-					cout << "result[l][i-1]" << stringToInt(result[l][i - 1]) << endl;
-					if (influence_topics.count(stringToInt(result[l][i - 1])) > 0) {
-						result[j][i] = result[l][i - 1];
-						influenceFlag = 1;
-						break;
+					// 影響なし
+					if (influenceFlag == 0) {
+						cout << result[j][i - 1] << endl;
+						result[j][i] = result[j][i - 1];
 					}
 				}
-			}
-			// 影響なし
-			if (influenceFlag == 0) {
-				cout << result[j][i - 1] << endl;
-				result[j][i] = result[j][i - 1];
-			}
-		}
 
-		for (int i = 0; i < userNum; i++) {
-			for (int j = 0; j < tlen; j++) {
-				cout << result[i][j];
+				for (int i = 0; i < userNum; i++) {
+					for (int j = 0; j < tlen; j++) {
+						cout << result[i][j];
+					}
+					cout << endl;
+				}
 			}
-			cout << endl;
+
+			// output
+			string outputStr("");
+			cout << "output" << endl;
+			for (int i = 0; i < userNum; i++) {
+				cout << result[i][0];
+				outputStr = outputStr + result[i][0];
+				for (int j = 1; j < tlen; j++) {
+					cout << result[i][j];
+					outputStr = outputStr + "," + result[i][j];
+				}
+				outputStr = outputStr + "\n";
+				cout << endl;
+			}
+
+			// make dir
+			string dir(outputDir + intToString(noiseNum) + "/");
+			int len = dir.length();
+			char* dirC = new char[len + 1];
+			memcpy(dirC, dir.c_str(), len + 1);
+			_mkdir(dirC);
+			string dir2(outputDir + intToString(noiseNum) + "/" + intToString(roopCount) + "/");
+			int len2 = dir2.length();
+			char* dirC2 = new char[len2 + 1];
+			memcpy(dirC2, dir2.c_str(), len2 + 1);
+			_mkdir(dirC2);
+
+
+			// output time series file open
+			ofstream result_file;
+			result_file.open(dir2 + "exp_ver15" + intToString(noi) + intToString(roopCount) + "_network-time-series.csv", ios::out);
+			result_file << outputStr;
+			result_file.close();
+
+			// output noise link
+			string noiseStr("");
+			cout << "output" << endl;
+			for (int a = 0; a < 10; a++) {
+				noiseStr = noiseStr + intToString(influence[a][0]);
+				for (int b = 1; b < 10; b++) {
+					noiseStr = noiseStr + "," + intToString(influence[a][b]);
+				}
+				noiseStr = noiseStr + "\n";
+				cout << endl;
+			}
+
+			ofstream noise_file;
+			noise_file.open(dir2 + "noise_ver15" + intToString(noi) + intToString(roopCount) + "_network-time-series.txt", ios::out);
+			noise_file << noiseStr;
+			noise_file.close();
+
+
+			// result matrix close
+			for (int i = 0; i < userNum; i++) {
+				delete[] result[i];
+			}
+			delete[] result;
+
 		}
 	}
-
-	// output
-	cout << "output" << endl;
-	for (int i = 0; i < userNum; i++) {
-		for (int j = 0; j < tlen; j++) {
-			cout << result[i][j];
-		}
-		cout << endl;
-	}
-
-
-	// result matrix close
-	for (int i = 0; i < userNum; i++) {
-		delete[] result[i];
-	}
-	delete[] result;
-
 
 	return 0;
 }
@@ -184,4 +254,9 @@ int stringToInt(string s)
 int chatToInt(char c)
 {
 	return (int)(c - '0');
+}
+
+int GetRandom(int min, int max)
+{
+	return min + (int)(rand()*(max - min + 1.0) / (1.0 + RAND_MAX));
 }

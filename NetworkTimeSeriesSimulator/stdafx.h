@@ -25,3 +25,4 @@ map<int, string> readCsv(string path);
 string intToString(int number);
 int stringToInt(string s);
 int chatToInt(char c);
+int GetRandom(int min, int max);
