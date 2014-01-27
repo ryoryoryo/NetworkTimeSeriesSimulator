@@ -7,8 +7,8 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	string dataDir("B:/workspace-c/data/time-series-network/input/exp15/");
-	string outputDir("B:/transfer-entropy/artificial_experiment/ver1.0/TE_ver1_exp_ver15/");
+	string dataDir("B:/workspace-c/data/time-series-network/input/exp17/");
+	string outputDir("B:/transfer-entropy/te/artificial_experiment/ver1.0/TE_ver1_exp_ver17/");
 
 	//user topci
 	map<int, string> userTopicMap = readCsv(dataDir + "user-topic.csv");
@@ -62,29 +62,27 @@ int _tmain(int argc, _TCHAR* argv[])
 				}
 			}
 
+			/*
 			// init
 			for (int i = 0; i < userNum; i++) {
 				for (int j = 0; j < tlen; j++) {
 					cout << result[i][j];
 				}
 				cout << endl;
-			}
+			}*/
 
 
 			// simulate
 			for (int i = 1; i < tlen; i++) {
-				cout << "time: " << i << endl;
 				for (int j = 1; j < userNum; j++) {
 					string link = networkMap[j];
 					string mytopic = userTopicMap[j];
 					int influenceFlag = 0;
-					if (i == 5 && j == 1) {
-						cout << "stop" << endl;
-					}
+					bool noiseFlag = false;
 					for (int l = 0; l < link.size(); l++) {
 						set<int> influence_topics;
 						// link判定
-						if (link[l] == '1' && influence[l][i - 1]) {
+						if (link[l] == '1') {
 							// topic判定
 							string partnerTopic = userTopicMap[l];
 							for (int m = 0; m < mytopic.size(); m++) {
@@ -97,15 +95,20 @@ int _tmain(int argc, _TCHAR* argv[])
 								}
 							}
 							// 影響値判定
-							cout << "influence_topics" << endl;
+							//cout << "influence_topics" << endl;
 							std::set< int >::iterator pos = influence_topics.begin();//先頭の要素を取得する
 							while (pos != influence_topics.end()){//最後の要素に達するまでループ
 								printf("%d\n", *pos);//値を表示
 								pos++;//一つ進める
 							}
-							cout << "result[l][i-1]" << stringToInt(result[l][i - 1]) << endl;
+							//cout << "result[l][i-1]" << stringToInt(result[l][i - 1]) << endl;
 							if (influence_topics.count(stringToInt(result[l][i - 1])) > 0) {
-								result[j][i] = result[l][i - 1];
+								if (influence[l][i - 1] == 0) {
+									result[j][i] = intToString(GetRandom(1, 4));
+								}
+								else {
+									result[j][i] = result[l][i - 1];
+								}
 								influenceFlag = 1;
 								break;
 							}
@@ -113,31 +116,30 @@ int _tmain(int argc, _TCHAR* argv[])
 					}
 					// 影響なし
 					if (influenceFlag == 0) {
-						cout << result[j][i - 1] << endl;
 						result[j][i] = result[j][i - 1];
 					}
 				}
-
+				/*
 				for (int i = 0; i < userNum; i++) {
 					for (int j = 0; j < tlen; j++) {
 						cout << result[i][j];
 					}
 					cout << endl;
-				}
+				}*/
 			}
 
 			// output
 			string outputStr("");
-			cout << "output" << endl;
+			//cout << "output" << endl;
 			for (int i = 0; i < userNum; i++) {
-				cout << result[i][0];
+				//cout << result[i][0];
 				outputStr = outputStr + result[i][0];
 				for (int j = 1; j < tlen; j++) {
-					cout << result[i][j];
+					//	cout << result[i][j];
 					outputStr = outputStr + "," + result[i][j];
 				}
 				outputStr = outputStr + "\n";
-				cout << endl;
+				//cout << endl;
 			}
 
 			// make dir
@@ -161,14 +163,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			// output noise link
 			string noiseStr("");
-			cout << "output" << endl;
+			//cout << "output" << endl;
 			for (int a = 0; a < 10; a++) {
 				noiseStr = noiseStr + intToString(influence[a][0]);
 				for (int b = 1; b < 10; b++) {
 					noiseStr = noiseStr + "," + intToString(influence[a][b]);
 				}
 				noiseStr = noiseStr + "\n";
-				cout << endl;
+				//	cout << endl;
 			}
 
 			ofstream noise_file;
